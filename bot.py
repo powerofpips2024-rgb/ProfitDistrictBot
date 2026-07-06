@@ -82,6 +82,15 @@ async def _send_checkout_prompt(context):
     await _broadcast(context, texts.CHECKOUT_EVENING_PROMPT, keyboard)
 
 
+async def _restart_from_stuck_conversation(update, context):
+    """Fallback for every ConversationHandler: if a user is stuck mid-flow (e.g. an
+    abandoned text prompt) and sends /start, cancel that flow and show the main menu
+    instead of silently ignoring the command or, worse, having an unrelated
+    conversation swallow their next message."""
+    await menu.start_command(update, context)
+    return ConversationHandler.END
+
+
 async def error_handler(update, context):
     if isinstance(context.error, BadRequest) and "Message is not modified" in str(context.error):
         return
@@ -107,9 +116,6 @@ async def _post_init(application: Application) -> None:
 def build_application() -> Application:
     application = Application.builder().token(BOT_TOKEN).post_init(_post_init).build()
 
-    application.add_handler(
-        CommandHandler("start", menu.start_command, filters=filters.ChatType.PRIVATE)
-    )
     application.add_handler(CommandHandler("raport", report.report_command))
     application.add_handler(CommandHandler("backup", backup.backup_command))
 
@@ -118,7 +124,8 @@ def build_application() -> Application:
         states={
             setxp.WAITING: [MessageHandler(setxp.text_filter, setxp.receive_list)],
         },
-        fallbacks=[CommandHandler("cancel", setxp.cancel)],
+        fallbacks=[CommandHandler("cancel", setxp.cancel), CommandHandler("start", _restart_from_stuck_conversation)],
+        conversation_timeout=600,
     )
     application.add_handler(setxp_conv)
 
@@ -135,7 +142,8 @@ def build_application() -> Application:
             ],
             submission.PROOF: [MessageHandler(submission.proof_filter, submission.receive_proof)],
         },
-        fallbacks=[CommandHandler("cancel", submission.cancel)],
+        fallbacks=[CommandHandler("cancel", submission.cancel), CommandHandler("start", _restart_from_stuck_conversation)],
+        conversation_timeout=600,
     )
     application.add_handler(submission_conv)
 
@@ -146,7 +154,8 @@ def build_application() -> Application:
                 MessageHandler(competition.text_filter, competition.receive_myfxbook_link)
             ],
         },
-        fallbacks=[CommandHandler("cancel", competition.cancel)],
+        fallbacks=[CommandHandler("cancel", competition.cancel), CommandHandler("start", _restart_from_stuck_conversation)],
+        conversation_timeout=600,
     )
     application.add_handler(myfxbook_conv)
 
@@ -155,7 +164,8 @@ def build_application() -> Application:
         states={
             trade.PHOTO: [MessageHandler(trade.photo_filter, trade.receive_photo)],
         },
-        fallbacks=[CommandHandler("cancel", trade.cancel)],
+        fallbacks=[CommandHandler("cancel", trade.cancel), CommandHandler("start", _restart_from_stuck_conversation)],
+        conversation_timeout=600,
     )
     application.add_handler(trade_conv)
 
@@ -164,7 +174,8 @@ def build_application() -> Application:
         states={
             feedback.PHOTO: [MessageHandler(feedback.photo_filter, feedback.receive_photo)],
         },
-        fallbacks=[CommandHandler("cancel", feedback.cancel)],
+        fallbacks=[CommandHandler("cancel", feedback.cancel), CommandHandler("start", _restart_from_stuck_conversation)],
+        conversation_timeout=600,
     )
     application.add_handler(feedback_conv)
 
@@ -180,7 +191,8 @@ def build_application() -> Application:
             checkin.Q6: [CallbackQueryHandler(checkin.q6, pattern=r"^ci:q6:")],
             checkin.Q7: [CallbackQueryHandler(checkin.q7, pattern=r"^ci:q7:")],
         },
-        fallbacks=[CommandHandler("cancel", checkin.cancel)],
+        fallbacks=[CommandHandler("cancel", checkin.cancel), CommandHandler("start", _restart_from_stuck_conversation)],
+        conversation_timeout=600,
     )
     application.add_handler(checkin_conv)
 
@@ -194,9 +206,17 @@ def build_application() -> Application:
             checkout.Q5_TEXT: [MessageHandler(checkout.text_filter, checkout.q5_text)],
             checkout.Q6: [CallbackQueryHandler(checkout.q6, pattern=r"^co:q6:")],
         },
-        fallbacks=[CommandHandler("cancel", checkout.cancel)],
+        fallbacks=[CommandHandler("cancel", checkout.cancel), CommandHandler("start", _restart_from_stuck_conversation)],
+        conversation_timeout=600,
     )
     application.add_handler(checkout_conv)
+
+    # Registered after every ConversationHandler above so that /start first gets a
+    # chance to hit each conversation's own "start" fallback (ending a stuck flow)
+    # before falling through here for users with no active conversation.
+    application.add_handler(
+        CommandHandler("start", menu.start_command, filters=filters.ChatType.PRIVATE)
+    )
 
     application.add_handler(CallbackQueryHandler(menu.route, pattern=r"^menu:"))
     application.add_handler(CallbackQueryHandler(broker_flow.route_broker, pattern=r"^brk:"))
