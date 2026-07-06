@@ -27,21 +27,30 @@ async def receive_list(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         await update.message.reply_text("Nu am găsit nicio linie validă. Anulat.")
         return ConversationHandler.END
 
+    MAX_SANE_XP = 10_000_000
+
     updated = []
     queued = []
+    skipped = []
     for name, username, xp_text in matches:
         name = name.strip()
-        xp = int(xp_text)
-        row = db.find_user_by_username(username) if username else None
-        if row is None:
-            row = db.find_user_by_first_name(name)
-        if row is None:
-            label = f"{name} (@{username})" if username else name
-            db.queue_pending_xp(username, name, xp)
-            queued.append(label)
-        else:
-            db.update_user(row["telegram_id"], xp=xp, tg_access=1, dc_access=1)
-            updated.append(name)
+        label = f"{name} (@{username})" if username else name
+        try:
+            xp = int(xp_text)
+            if xp > MAX_SANE_XP:
+                raise ValueError(f"xp={xp} depășește limita rezonabilă")
+            row = db.find_user_by_username(username) if username else None
+            if row is None:
+                row = db.find_user_by_first_name(name)
+            if row is None:
+                db.queue_pending_xp(username, name, xp)
+                queued.append(label)
+            else:
+                db.update_user(row["telegram_id"], xp=xp, tg_access=1, dc_access=1)
+                updated.append(name)
+        except Exception:
+            # Never let one malformed/absurd line abort the rest of the list.
+            skipped.append(label)
 
     summary = f"✅ XP restaurat și acces Telegram+Discord deblocat pentru {len(updated)} membri."
     if queued:
@@ -51,6 +60,9 @@ async def receive_list(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             "fără să reia nimic de la capăt:\n"
         )
         summary += "\n".join(queued)
+    if skipped:
+        summary += f"\n\n⚠️ Sărite ({len(skipped)}) — linie neobișnuită, verifică manual:\n"
+        summary += "\n".join(skipped)
     await update.message.reply_text(summary)
     return ConversationHandler.END
 
