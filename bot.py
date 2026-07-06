@@ -31,6 +31,7 @@ from handlers import (
     join,
     menu,
     report,
+    setxp,
     submission,
     trade,
 )
@@ -97,6 +98,7 @@ async def _post_init(application: Application) -> None:
                 BotCommand("start", "Pornește botul și arată meniul principal"),
                 BotCommand("raport", "Evidența XP a tuturor membrilor"),
                 BotCommand("backup", "Descarcă o copie a bazei de date"),
+                BotCommand("setxp", "Actualizează XP din listă lipită"),
             ],
             scope=BotCommandScopeChat(chat_id=ADMIN_CHAT_ID),
         )
@@ -110,6 +112,15 @@ def build_application() -> Application:
     )
     application.add_handler(CommandHandler("raport", report.report_command))
     application.add_handler(CommandHandler("backup", backup.backup_command))
+
+    setxp_conv = ConversationHandler(
+        entry_points=[CommandHandler("setxp", setxp.start)],
+        states={
+            setxp.WAITING: [MessageHandler(setxp.text_filter, setxp.receive_list)],
+        },
+        fallbacks=[CommandHandler("cancel", setxp.cancel)],
+    )
+    application.add_handler(setxp_conv)
 
     submission_conv = ConversationHandler(
         entry_points=[

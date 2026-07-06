@@ -199,6 +199,24 @@ def record_daily_feedback(telegram_id: int) -> bool:
     return True
 
 
+def find_user_by_username(username: str) -> sqlite3.Row | None:
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT * FROM users WHERE username = ? COLLATE NOCASE", (username,)
+    ).fetchone()
+    conn.close()
+    return row
+
+
+def find_user_by_first_name(name: str) -> sqlite3.Row | None:
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT * FROM users WHERE first_name = ? COLLATE NOCASE", (name,)
+    ).fetchall()
+    conn.close()
+    return rows[0] if len(rows) == 1 else None
+
+
 def get_leaderboard(limit: int = 10) -> list[sqlite3.Row]:
     conn = get_connection()
     rows = conn.execute(
