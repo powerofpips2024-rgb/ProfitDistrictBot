@@ -5,6 +5,7 @@ import db
 import keyboards
 import texts
 from achievements import achievement_status
+from handlers.render import edit_or_send
 from levels import LEVELS, level_for_xp, next_level_for_xp, progress_bar, unlocked_benefits
 
 
@@ -58,4 +59,4 @@ async def show(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     reply_markup = keyboards.level_menu(show_trade_button=not (user and user["first_trade_confirmed"]))
-    await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="HTML")
+    await edit_or_send(query, text, reply_markup=reply_markup, parse_mode="HTML")

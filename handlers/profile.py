@@ -4,6 +4,7 @@ from telegram.ext import ContextTypes
 import db
 import keyboards
 import texts
+from handlers.render import edit_or_send
 
 ECOSYSTEM_ITEMS = [
     ("mentorship_confirmed", "30 Days Mentorship"),
@@ -91,4 +92,4 @@ async def show(update: Update, context: ContextTypes.DEFAULT_TYPE):
         next_step=_next_step_text(user),
         next_event=texts.NEXT_EVENT_TEXT,
     )
-    await query.edit_message_text(text, reply_markup=keyboards.profile_menu(), parse_mode="HTML")
+    await edit_or_send(query, text, reply_markup=keyboards.profile_menu(), parse_mode="HTML")

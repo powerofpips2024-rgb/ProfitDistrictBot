@@ -4,6 +4,7 @@ from telegram.ext import ContextTypes
 import db
 import keyboards
 import texts
+from handlers.render import edit_or_send
 
 MEDALS = {1: "🥇", 2: "🥈", 3: "🥉"}
 
@@ -34,4 +35,4 @@ async def show(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if rank and user:
                 text += texts.LEADERBOARD_YOUR_RANK.format(rank=rank, xp=user["xp"])
 
-    await query.edit_message_text(text, reply_markup=keyboards.back_to_main_menu(), parse_mode="HTML")
+    await edit_or_send(query, text, reply_markup=keyboards.back_to_main_menu(), parse_mode="HTML")

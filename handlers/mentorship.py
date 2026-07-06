@@ -4,6 +4,7 @@ from telegram.ext import ContextTypes
 import db
 import keyboards
 import texts
+from handlers.render import edit_or_send
 
 
 async def show_intro(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -17,6 +18,6 @@ async def show_intro(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await query.answer()
 
-    await query.edit_message_text(
-        texts.MENTORSHIP, reply_markup=keyboards.mentorship_menu(), parse_mode="HTML"
+    await edit_or_send(
+        query, texts.MENTORSHIP, reply_markup=keyboards.mentorship_menu(), parse_mode="HTML"
     )

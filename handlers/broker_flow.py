@@ -7,6 +7,7 @@ import db
 import keyboards
 import texts
 from config import FP_MARKETS_LINK, PU_PRIME_LINK
+from handlers.render import edit_or_send
 
 PRODUCT_INTRO = {
     "tg": texts.TELEGRAM_INTRO,
@@ -33,7 +34,8 @@ async def show_intro(update: Update, context: ContextTypes.DEFAULT_TYPE, product
     query = update.callback_query
     await query.answer()
     db.update_user(update.effective_user.id, product=product)
-    await query.edit_message_text(
+    await edit_or_send(
+        query,
         PRODUCT_INTRO[product],
         reply_markup=keyboards.broker_has_broker_menu(product),
         parse_mode="HTML",
@@ -50,13 +52,15 @@ async def _show_onboarding_step(update: Update, product: str, step: int):
     }
     if step in step_content:
         text, label = step_content[step]
-        await query.edit_message_text(
+        await edit_or_send(
+            query,
             text,
             reply_markup=keyboards.onboarding_step_menu(product, step + 1, label),
             parse_mode="HTML",
         )
     elif step == 5:
-        await query.edit_message_text(
+        await edit_or_send(
+            query,
             texts.ONBOARDING_STEP_5,
             reply_markup=keyboards.submission_start_menu(product),
             parse_mode="HTML",
@@ -72,12 +76,14 @@ async def route_broker(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if field == "has":
         db.update_user(user_id, has_broker=value)
         if value == "yes":
-            await query.edit_message_text(
+            await edit_or_send(
+                query,
                 texts.ASK_EXISTING_BROKER,
                 reply_markup=keyboards.broker_existing_menu(product),
             )
         else:
-            await query.edit_message_text(
+            await edit_or_send(
+                query,
                 texts.ASK_CAPITAL,
                 reply_markup=keyboards.broker_capital_menu(product),
             )
@@ -86,7 +92,7 @@ async def route_broker(update: Update, context: ContextTypes.DEFAULT_TYPE):
         db.update_user(user_id, existing_broker=value)
         if value == "pu":
             db.update_user(user_id, broker_recommended="PU Prime")
-            await query.edit_message_text(texts.PU_PRIME_TRANSFER_INSTRUCTIONS, parse_mode="HTML")
+            await edit_or_send(query, texts.PU_PRIME_TRANSFER_INSTRUCTIONS, parse_mode="HTML")
             with open(IB_IMAGE_PATH, "rb") as photo:
                 await query.message.reply_photo(
                     photo=photo,
@@ -99,7 +105,8 @@ async def route_broker(update: Update, context: ContextTypes.DEFAULT_TYPE):
         broker_name = "FP Markets" if link == FP_MARKETS_LINK else "PU Prime"
         db.update_user(user_id, broker_recommended=broker_name)
         show_support = value == "fp" and product in ("tg", "dc", "both")
-        await query.edit_message_text(
+        await edit_or_send(
+            query,
             texts.RECOMMEND_FOR_EXISTING_BROKER.format(broker=broker_name),
             reply_markup=keyboards.broker_recommendation_menu(product, link, show_support=show_support),
             parse_mode="HTML",
@@ -109,13 +116,15 @@ async def route_broker(update: Update, context: ContextTypes.DEFAULT_TYPE):
         db.update_user(user_id, capital=value)
         if value == "under200":
             db.update_user(user_id, broker_recommended="PU Prime")
-            await query.edit_message_text(
+            await edit_or_send(
+                query,
                 texts.RECOMMEND_PU_PRIME,
                 reply_markup=keyboards.broker_recommendation_menu(product, PU_PRIME_LINK),
                 parse_mode="HTML",
             )
         else:
-            await query.edit_message_text(
+            await edit_or_send(
+                query,
                 texts.ASK_PRIORITY,
                 reply_markup=keyboards.broker_priority_menu(product),
             )
@@ -132,7 +141,8 @@ async def route_broker(update: Update, context: ContextTypes.DEFAULT_TYPE):
             broker, text = "PU Prime", texts.RECOMMEND_PU_PRIME_BONUS
             link = PU_PRIME_LINK
         db.update_user(user_id, broker_recommended=broker)
-        await query.edit_message_text(
+        await edit_or_send(
+            query,
             text,
             reply_markup=keyboards.broker_recommendation_menu(product, link),
             parse_mode="HTML",

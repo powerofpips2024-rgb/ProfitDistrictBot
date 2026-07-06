@@ -35,24 +35,24 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def show_start_here(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    await query.edit_message_text(
-        texts.START_HERE, reply_markup=keyboards.start_here_menu(), parse_mode="HTML"
+    await edit_or_send(
+        query, texts.START_HERE, reply_markup=keyboards.start_here_menu(), parse_mode="HTML"
     )
 
 
 async def show_events(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    await query.edit_message_text(
-        texts.EVENTS_TEXT, reply_markup=keyboards.events_menu(), parse_mode="HTML"
+    await edit_or_send(
+        query, texts.EVENTS_TEXT, reply_markup=keyboards.events_menu(), parse_mode="HTML"
     )
 
 
 async def show_resources(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    await query.edit_message_text(
-        texts.RESOURCES_TEXT, reply_markup=keyboards.back_to_main_menu(), parse_mode="HTML"
+    await edit_or_send(
+        query, texts.RESOURCES_TEXT, reply_markup=keyboards.back_to_main_menu(), parse_mode="HTML"
     )
 
 
