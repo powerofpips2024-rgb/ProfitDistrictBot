@@ -268,12 +268,17 @@ def claim_pending_xp(telegram_id: int, username: str | None, first_name: str | N
     if row is None:
         conn.close()
         return None
-    conn.execute("DELETE FROM pending_xp WHERE rowid = ?", (row["rid"],))
-    conn.execute(
+    cursor = conn.execute(
         "UPDATE users SET xp = ?, tg_access = 1, dc_access = 1, updated_at = CURRENT_TIMESTAMP "
         "WHERE telegram_id = ?",
         (row["xp"], telegram_id),
     )
+    if cursor.rowcount == 0:
+        # telegram_id isn't in users yet (caller should upsert_user first) -- leave
+        # the pending record queued rather than silently discarding it.
+        conn.close()
+        return None
+    conn.execute("DELETE FROM pending_xp WHERE rowid = ?", (row["rid"],))
     conn.commit()
     conn.close()
     return row["xp"]
