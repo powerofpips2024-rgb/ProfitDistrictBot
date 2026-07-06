@@ -228,23 +228,30 @@ def find_user_by_username(username: str) -> sqlite3.Row | None:
 
 
 def find_user_by_first_name(name: str) -> sqlite3.Row | None:
+    # SQLite's NOCASE collation only case-folds ASCII a-z, not diacritics
+    # (Ă/ă, Ș/ș, etc.), so a Romanian name like "Ștefan" vs "ștefan" would
+    # otherwise fail to match. Python's str.casefold() handles Unicode
+    # correctly, so we filter in Python instead of relying on SQL COLLATE.
     conn = get_connection()
-    rows = conn.execute(
-        "SELECT * FROM users WHERE first_name = ? COLLATE NOCASE", (name,)
-    ).fetchall()
+    target = name.casefold()
+    rows = conn.execute("SELECT * FROM users WHERE first_name IS NOT NULL").fetchall()
     conn.close()
-    return rows[0] if len(rows) == 1 else None
+    matches = [r for r in rows if r["first_name"].casefold() == target]
+    return matches[0] if len(matches) == 1 else None
 
 
 def queue_pending_xp(username: str | None, first_name: str | None, xp: int):
     conn = get_connection()
     if username:
         conn.execute("DELETE FROM pending_xp WHERE username = ? COLLATE NOCASE", (username,))
-    else:
-        conn.execute(
-            "DELETE FROM pending_xp WHERE username IS NULL AND first_name = ? COLLATE NOCASE",
-            (first_name,),
-        )
+    elif first_name:
+        target = first_name.casefold()
+        rows = conn.execute(
+            "SELECT rowid AS rid, first_name FROM pending_xp WHERE username IS NULL AND first_name IS NOT NULL"
+        ).fetchall()
+        for r in rows:
+            if r["first_name"].casefold() == target:
+                conn.execute("DELETE FROM pending_xp WHERE rowid = ?", (r["rid"],))
     conn.execute(
         "INSERT INTO pending_xp (username, first_name, xp) VALUES (?, ?, ?)",
         (username, first_name, xp),
@@ -261,10 +268,12 @@ def claim_pending_xp(telegram_id: int, username: str | None, first_name: str | N
             "SELECT rowid AS rid, xp FROM pending_xp WHERE username = ? COLLATE NOCASE", (username,)
         ).fetchone()
     if row is None and first_name:
-        row = conn.execute(
-            "SELECT rowid AS rid, xp FROM pending_xp WHERE username IS NULL AND first_name = ? COLLATE NOCASE",
-            (first_name,),
-        ).fetchone()
+        target = first_name.casefold()
+        candidates = conn.execute(
+            "SELECT rowid AS rid, xp, first_name FROM pending_xp WHERE username IS NULL AND first_name IS NOT NULL"
+        ).fetchall()
+        matches = [r for r in candidates if r["first_name"].casefold() == target]
+        row = matches[0] if len(matches) == 1 else None
     if row is None:
         conn.close()
         return None
