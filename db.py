@@ -1,4 +1,5 @@
 import sqlite3
+import unicodedata
 from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -15,6 +16,13 @@ def _today() -> date:
     """Today's date in the community's own timezone, not the server's (Railway runs
     UTC, which would otherwise roll the day over 2-3h before actual Romanian midnight)."""
     return datetime.now(TIMEZONE).date()
+
+
+def _fold_name(name: str) -> str:
+    """Case- and normalization-insensitive key for name comparisons. Two visually
+    identical names can use different Unicode composition forms (e.g. precomposed
+    'ș' vs a base letter + combining accent) and would otherwise compare unequal."""
+    return unicodedata.normalize("NFC", name).casefold()
 
 
 def get_connection():
@@ -230,13 +238,13 @@ def find_user_by_username(username: str) -> sqlite3.Row | None:
 def find_user_by_first_name(name: str) -> sqlite3.Row | None:
     # SQLite's NOCASE collation only case-folds ASCII a-z, not diacritics
     # (Ă/ă, Ș/ș, etc.), so a Romanian name like "Ștefan" vs "ștefan" would
-    # otherwise fail to match. Python's str.casefold() handles Unicode
-    # correctly, so we filter in Python instead of relying on SQL COLLATE.
+    # otherwise fail to match. _fold_name() handles Unicode correctly, so we
+    # filter in Python instead of relying on SQL COLLATE.
     conn = get_connection()
-    target = name.casefold()
+    target = _fold_name(name)
     rows = conn.execute("SELECT * FROM users WHERE first_name IS NOT NULL").fetchall()
     conn.close()
-    matches = [r for r in rows if r["first_name"].casefold() == target]
+    matches = [r for r in rows if _fold_name(r["first_name"]) == target]
     return matches[0] if len(matches) == 1 else None
 
 
@@ -245,12 +253,12 @@ def queue_pending_xp(username: str | None, first_name: str | None, xp: int):
     if username:
         conn.execute("DELETE FROM pending_xp WHERE username = ? COLLATE NOCASE", (username,))
     elif first_name:
-        target = first_name.casefold()
+        target = _fold_name(first_name)
         rows = conn.execute(
             "SELECT rowid AS rid, first_name FROM pending_xp WHERE username IS NULL AND first_name IS NOT NULL"
         ).fetchall()
         for r in rows:
-            if r["first_name"].casefold() == target:
+            if _fold_name(r["first_name"]) == target:
                 conn.execute("DELETE FROM pending_xp WHERE rowid = ?", (r["rid"],))
     conn.execute(
         "INSERT INTO pending_xp (username, first_name, xp) VALUES (?, ?, ?)",
@@ -268,11 +276,11 @@ def claim_pending_xp(telegram_id: int, username: str | None, first_name: str | N
             "SELECT rowid AS rid, xp FROM pending_xp WHERE username = ? COLLATE NOCASE", (username,)
         ).fetchone()
     if row is None and first_name:
-        target = first_name.casefold()
+        target = _fold_name(first_name)
         candidates = conn.execute(
             "SELECT rowid AS rid, xp, first_name FROM pending_xp WHERE username IS NULL AND first_name IS NOT NULL"
         ).fetchall()
-        matches = [r for r in candidates if r["first_name"].casefold() == target]
+        matches = [r for r in candidates if _fold_name(r["first_name"]) == target]
         row = matches[0] if len(matches) == 1 else None
     if row is None:
         conn.close()
