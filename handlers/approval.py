@@ -65,6 +65,9 @@ async def request(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def approve(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    if not ADMIN_CHAT_ID or str(update.effective_chat.id) != str(ADMIN_CHAT_ID):
+        await query.answer()
+        return
     _, approval_type, user_id_str = query.data.split(":")
     user_id = int(user_id_str)
 

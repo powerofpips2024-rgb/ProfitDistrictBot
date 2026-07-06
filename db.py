@@ -1,11 +1,20 @@
 import sqlite3
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import config
 
 DB_PATH = Path(config.DB_PATH) if config.DB_PATH else Path(__file__).parent / "data.db"
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+TIMEZONE = ZoneInfo("Europe/Bucharest")
+
+
+def _today() -> date:
+    """Today's date in the community's own timezone, not the server's (Railway runs
+    UTC, which would otherwise roll the day over 2-3h before actual Romanian midnight)."""
+    return datetime.now(TIMEZONE).date()
 
 
 def get_connection():
@@ -165,7 +174,7 @@ def add_xp(telegram_id: int, amount: int):
 
 
 def award_daily_bonus(telegram_id: int) -> bool:
-    today = date.today()
+    today = _today()
     today_iso = today.isoformat()
     conn = get_connection()
     row = conn.execute(
@@ -191,7 +200,7 @@ def award_daily_bonus(telegram_id: int) -> bool:
 
 
 def record_daily_feedback(telegram_id: int) -> bool:
-    today = date.today().isoformat()
+    today = _today().isoformat()
     conn = get_connection()
     row = conn.execute(
         "SELECT last_feedback_day FROM users WHERE telegram_id = ?", (telegram_id,)
@@ -301,7 +310,7 @@ def all_telegram_ids() -> list[int]:
 
 
 def checkin_exists_today(telegram_id: int) -> bool:
-    today = date.today().isoformat()
+    today = _today().isoformat()
     conn = get_connection()
     row = conn.execute(
         "SELECT 1 FROM daily_checkin WHERE telegram_id = ? AND day = ?", (telegram_id, today)
@@ -311,7 +320,7 @@ def checkin_exists_today(telegram_id: int) -> bool:
 
 
 def save_checkin(telegram_id: int, **fields):
-    day = date.today().isoformat()
+    day = _today().isoformat()
     columns = ["telegram_id", "day"] + list(fields.keys())
     placeholders = ", ".join("?" for _ in columns)
     values = [telegram_id, day] + list(fields.values())
@@ -325,7 +334,7 @@ def save_checkin(telegram_id: int, **fields):
 
 
 def save_checkout(telegram_id: int, **fields):
-    day = date.today().isoformat()
+    day = _today().isoformat()
     columns = ["telegram_id", "day"] + list(fields.keys())
     placeholders = ", ".join("?" for _ in columns)
     values = [telegram_id, day] + list(fields.values())
