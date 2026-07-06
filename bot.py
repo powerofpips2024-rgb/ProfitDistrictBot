@@ -91,6 +91,32 @@ async def _restart_from_stuck_conversation(update, context):
     return ConversationHandler.END
 
 
+HINT_NEEDS_TEXT = "✏️ Te rog scrie un răspuns text ca să continui (sau /cancel ca să renunți)."
+HINT_NEEDS_PHOTO = "📎 Te rog trimite o poză (sau document) ca să continui (sau /cancel ca să renunți)."
+HINT_NEEDS_BUTTON = "👆 Te rog apasă unul din butoanele de mai sus ca să continui."
+
+
+async def _hint_needs_text(update, context):
+    """Catch-all appended to every text-only conversation state: if the user sends a
+    photo/sticker/voice/etc. instead of typing, respond with a hint instead of silently
+    ignoring the message (which otherwise looks exactly like a broken button)."""
+    await update.message.reply_text(HINT_NEEDS_TEXT)
+    return None
+
+
+async def _hint_needs_photo(update, context):
+    """Same idea as _hint_needs_text, for states that expect a photo/document."""
+    await update.message.reply_text(HINT_NEEDS_PHOTO)
+    return None
+
+
+async def _hint_needs_button(update, context):
+    """Catch-all appended to callback-button conversation states: if the user types
+    text instead of tapping a button, respond with a hint instead of silence."""
+    await update.message.reply_text(HINT_NEEDS_BUTTON)
+    return None
+
+
 async def error_handler(update, context):
     if isinstance(context.error, BadRequest) and "Message is not modified" in str(context.error):
         return
@@ -122,10 +148,14 @@ def build_application() -> Application:
     setxp_conv = ConversationHandler(
         entry_points=[CommandHandler("setxp", setxp.start)],
         states={
-            setxp.WAITING: [MessageHandler(setxp.text_filter, setxp.receive_list)],
+            setxp.WAITING: [
+                MessageHandler(setxp.text_filter, setxp.receive_list),
+                MessageHandler(filters.ALL & ~filters.COMMAND, _hint_needs_text),
+            ],
         },
         fallbacks=[CommandHandler("cancel", setxp.cancel), CommandHandler("start", _restart_from_stuck_conversation)],
         conversation_timeout=600,
+        allow_reentry=True,
     )
     application.add_handler(setxp_conv)
 
@@ -134,16 +164,30 @@ def build_application() -> Application:
             CallbackQueryHandler(submission.start_submission, pattern=r"^sub:(tg|dc|both|comp):(std|pu):start$")
         ],
         states={
-            submission.NUME: [MessageHandler(submission.text_filter, submission.receive_nume)],
-            submission.PRENUME: [MessageHandler(submission.text_filter, submission.receive_prenume)],
-            submission.EMAIL: [MessageHandler(submission.text_filter, submission.receive_email)],
-            submission.DISCORD_USERNAME: [
-                MessageHandler(submission.text_filter, submission.receive_discord_username)
+            submission.NUME: [
+                MessageHandler(submission.text_filter, submission.receive_nume),
+                MessageHandler(filters.ALL & ~filters.COMMAND, _hint_needs_text),
             ],
-            submission.PROOF: [MessageHandler(submission.proof_filter, submission.receive_proof)],
+            submission.PRENUME: [
+                MessageHandler(submission.text_filter, submission.receive_prenume),
+                MessageHandler(filters.ALL & ~filters.COMMAND, _hint_needs_text),
+            ],
+            submission.EMAIL: [
+                MessageHandler(submission.text_filter, submission.receive_email),
+                MessageHandler(filters.ALL & ~filters.COMMAND, _hint_needs_text),
+            ],
+            submission.DISCORD_USERNAME: [
+                MessageHandler(submission.text_filter, submission.receive_discord_username),
+                MessageHandler(filters.ALL & ~filters.COMMAND, _hint_needs_text),
+            ],
+            submission.PROOF: [
+                MessageHandler(submission.proof_filter, submission.receive_proof),
+                MessageHandler(filters.ALL & ~filters.COMMAND, _hint_needs_photo),
+            ],
         },
         fallbacks=[CommandHandler("cancel", submission.cancel), CommandHandler("start", _restart_from_stuck_conversation)],
         conversation_timeout=600,
+        allow_reentry=True,
     )
     application.add_handler(submission_conv)
 
@@ -151,63 +195,117 @@ def build_application() -> Application:
         entry_points=[CallbackQueryHandler(competition.ask_myfxbook_link, pattern=r"^comp:step:4$")],
         states={
             competition.MYFXBOOK_LINK: [
-                MessageHandler(competition.text_filter, competition.receive_myfxbook_link)
+                MessageHandler(competition.text_filter, competition.receive_myfxbook_link),
+                MessageHandler(filters.ALL & ~filters.COMMAND, _hint_needs_text),
             ],
         },
         fallbacks=[CommandHandler("cancel", competition.cancel), CommandHandler("start", _restart_from_stuck_conversation)],
         conversation_timeout=600,
+        allow_reentry=True,
     )
     application.add_handler(myfxbook_conv)
 
     trade_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(trade.start, pattern=r"^trade:start$")],
         states={
-            trade.PHOTO: [MessageHandler(trade.photo_filter, trade.receive_photo)],
+            trade.PHOTO: [
+                MessageHandler(trade.photo_filter, trade.receive_photo),
+                MessageHandler(filters.ALL & ~filters.COMMAND, _hint_needs_photo),
+            ],
         },
         fallbacks=[CommandHandler("cancel", trade.cancel), CommandHandler("start", _restart_from_stuck_conversation)],
         conversation_timeout=600,
+        allow_reentry=True,
     )
     application.add_handler(trade_conv)
 
     feedback_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(feedback.start, pattern=r"^feedback:start$")],
         states={
-            feedback.PHOTO: [MessageHandler(feedback.photo_filter, feedback.receive_photo)],
+            feedback.PHOTO: [
+                MessageHandler(feedback.photo_filter, feedback.receive_photo),
+                MessageHandler(filters.ALL & ~filters.COMMAND, _hint_needs_photo),
+            ],
         },
         fallbacks=[CommandHandler("cancel", feedback.cancel), CommandHandler("start", _restart_from_stuck_conversation)],
         conversation_timeout=600,
+        allow_reentry=True,
     )
     application.add_handler(feedback_conv)
 
     checkin_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(checkin.start, pattern=r"^checkin:start$")],
         states={
-            checkin.Q1: [CallbackQueryHandler(checkin.q1, pattern=r"^ci:q1:")],
-            checkin.Q2: [CallbackQueryHandler(checkin.q2, pattern=r"^ci:q2:")],
-            checkin.Q3: [CallbackQueryHandler(checkin.q3, pattern=r"^ci:q3:")],
-            checkin.Q4: [CallbackQueryHandler(checkin.q4, pattern=r"^ci:q4:")],
-            checkin.Q5: [CallbackQueryHandler(checkin.q5, pattern=r"^ci:q5:")],
-            checkin.Q5_CUSTOM: [MessageHandler(checkin.text_filter, checkin.q5_custom)],
-            checkin.Q6: [CallbackQueryHandler(checkin.q6, pattern=r"^ci:q6:")],
-            checkin.Q7: [CallbackQueryHandler(checkin.q7, pattern=r"^ci:q7:")],
+            checkin.Q1: [
+                CallbackQueryHandler(checkin.q1, pattern=r"^ci:q1:"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, _hint_needs_button),
+            ],
+            checkin.Q2: [
+                CallbackQueryHandler(checkin.q2, pattern=r"^ci:q2:"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, _hint_needs_button),
+            ],
+            checkin.Q3: [
+                CallbackQueryHandler(checkin.q3, pattern=r"^ci:q3:"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, _hint_needs_button),
+            ],
+            checkin.Q4: [
+                CallbackQueryHandler(checkin.q4, pattern=r"^ci:q4:"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, _hint_needs_button),
+            ],
+            checkin.Q5: [
+                CallbackQueryHandler(checkin.q5, pattern=r"^ci:q5:"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, _hint_needs_button),
+            ],
+            checkin.Q5_CUSTOM: [
+                MessageHandler(checkin.text_filter, checkin.q5_custom),
+                MessageHandler(filters.ALL & ~filters.COMMAND, _hint_needs_text),
+            ],
+            checkin.Q6: [
+                CallbackQueryHandler(checkin.q6, pattern=r"^ci:q6:"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, _hint_needs_button),
+            ],
+            checkin.Q7: [
+                CallbackQueryHandler(checkin.q7, pattern=r"^ci:q7:"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, _hint_needs_button),
+            ],
         },
         fallbacks=[CommandHandler("cancel", checkin.cancel), CommandHandler("start", _restart_from_stuck_conversation)],
         conversation_timeout=600,
+        allow_reentry=True,
     )
     application.add_handler(checkin_conv)
 
     checkout_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(checkout.start, pattern=r"^checkout:start$")],
         states={
-            checkout.Q1: [CallbackQueryHandler(checkout.q1, pattern=r"^co:q1:")],
-            checkout.Q2: [CallbackQueryHandler(checkout.q2, pattern=r"^co:q2:")],
-            checkout.Q3: [CallbackQueryHandler(checkout.q3, pattern=r"^co:q3:")],
-            checkout.Q4_TEXT: [MessageHandler(checkout.text_filter, checkout.q4_text)],
-            checkout.Q5_TEXT: [MessageHandler(checkout.text_filter, checkout.q5_text)],
-            checkout.Q6: [CallbackQueryHandler(checkout.q6, pattern=r"^co:q6:")],
+            checkout.Q1: [
+                CallbackQueryHandler(checkout.q1, pattern=r"^co:q1:"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, _hint_needs_button),
+            ],
+            checkout.Q2: [
+                CallbackQueryHandler(checkout.q2, pattern=r"^co:q2:"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, _hint_needs_button),
+            ],
+            checkout.Q3: [
+                CallbackQueryHandler(checkout.q3, pattern=r"^co:q3:"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, _hint_needs_button),
+            ],
+            checkout.Q4_TEXT: [
+                MessageHandler(checkout.text_filter, checkout.q4_text),
+                MessageHandler(filters.ALL & ~filters.COMMAND, _hint_needs_text),
+            ],
+            checkout.Q5_TEXT: [
+                MessageHandler(checkout.text_filter, checkout.q5_text),
+                MessageHandler(filters.ALL & ~filters.COMMAND, _hint_needs_text),
+            ],
+            checkout.Q6: [
+                CallbackQueryHandler(checkout.q6, pattern=r"^co:q6:"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, _hint_needs_button),
+            ],
         },
         fallbacks=[CommandHandler("cancel", checkout.cancel), CommandHandler("start", _restart_from_stuck_conversation)],
         conversation_timeout=600,
+        allow_reentry=True,
     )
     application.add_handler(checkout_conv)
 
