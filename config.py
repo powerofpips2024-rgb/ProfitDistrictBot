@@ -14,3 +14,5 @@ CONTACT_USERNAME = os.environ.get("CONTACT_USERNAME", "hanetrades")
 
 FP_MARKETS_LINK = os.environ.get("FP_MARKETS_LINK", "https://PLACEHOLDER-fp-markets-affiliate-link")
 PU_PRIME_LINK = os.environ.get("PU_PRIME_LINK", "https://PLACEHOLDER-pu-prime-affiliate-link")
+
+DB_PATH = os.environ.get("DB_PATH", "").strip()

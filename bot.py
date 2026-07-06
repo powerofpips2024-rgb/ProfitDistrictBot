@@ -19,6 +19,7 @@ import texts
 from config import ADMIN_CHAT_ID, BOT_TOKEN
 from handlers import (
     approval,
+    backup,
     broker_flow,
     challenge,
     checkin,
@@ -95,6 +96,7 @@ async def _post_init(application: Application) -> None:
             [
                 BotCommand("start", "Pornește botul și arată meniul principal"),
                 BotCommand("raport", "Evidența XP a tuturor membrilor"),
+                BotCommand("backup", "Descarcă o copie a bazei de date"),
             ],
             scope=BotCommandScopeChat(chat_id=ADMIN_CHAT_ID),
         )
@@ -107,6 +109,7 @@ def build_application() -> Application:
         CommandHandler("start", menu.start_command, filters=filters.ChatType.PRIVATE)
     )
     application.add_handler(CommandHandler("raport", report.report_command))
+    application.add_handler(CommandHandler("backup", backup.backup_command))
 
     submission_conv = ConversationHandler(
         entry_points=[
@@ -208,6 +211,9 @@ def build_application() -> Application:
     )
     application.job_queue.run_daily(
         _send_checkout_prompt, time=datetime.time(19, 0, tzinfo=TIMEZONE)
+    )
+    application.job_queue.run_daily(
+        backup.daily_backup_job, time=datetime.time(3, 0, tzinfo=TIMEZONE)
     )
 
     return application
