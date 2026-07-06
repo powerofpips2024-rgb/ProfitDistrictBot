@@ -1,3 +1,4 @@
+import html
 import re
 
 from telegram import Update
@@ -128,13 +129,13 @@ async def _notify_admin_submission(context, user, product, nume, prenume, email,
         product=PRODUCT_LABEL[product],
         mention=user.mention_html(),
         telegram_id=user.id,
-        nume=nume,
-        prenume=prenume,
-        email=email or "-",
+        nume=html.escape(nume),
+        prenume=html.escape(prenume),
+        email=html.escape(email) if email else "-",
         broker=broker,
     )
     if discord_username:
-        text += f"\nUsername Discord: {discord_username}"
+        text += f"\nUsername Discord: {html.escape(discord_username)}"
     await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=text, parse_mode="HTML")
     proof_file_id = db_user["proof_file_id"] if db_user else None
     if proof_file_id:

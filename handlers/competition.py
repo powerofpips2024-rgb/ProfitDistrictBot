@@ -1,3 +1,5 @@
+import html
+
 from telegram import Update
 from telegram.ext import ContextTypes, ConversationHandler, filters
 
@@ -47,7 +49,7 @@ async def receive_myfxbook_link(update: Update, context: ContextTypes.DEFAULT_TY
     if ADMIN_CHAT_ID:
         await context.bot.send_message(
             chat_id=ADMIN_CHAT_ID,
-            text=f"🔔 Link Myfxbook primit de la {user.mention_html()} (id: {user.id}):\n{link}",
+            text=f"🔔 Link Myfxbook primit de la {user.mention_html()} (id: {user.id}):\n{html.escape(link)}",
             parse_mode="HTML",
         )
 

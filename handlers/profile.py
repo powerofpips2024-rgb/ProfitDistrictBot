@@ -1,3 +1,5 @@
+import html
+
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -73,7 +75,7 @@ async def show(update: Update, context: ContextTypes.DEFAULT_TYPE):
     mission_title, mission_progress = _mission(user)
 
     text = texts.PROFILE_TEMPLATE.format(
-        first_name=update.effective_user.first_name or "",
+        first_name=html.escape(update.effective_user.first_name or ""),
         ecosystem_bar=ecosystem_bar,
         ecosystem_percent=ecosystem_percent,
         ecosystem_remaining=ecosystem_remaining,

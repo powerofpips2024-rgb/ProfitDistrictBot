@@ -1,3 +1,5 @@
+import html
+
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -25,7 +27,7 @@ async def show(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if row["telegram_id"] == user_id:
                 in_top = True
             medal = MEDALS.get(position, f"{position}.")
-            name = row["first_name"] or "Utilizator"
+            name = html.escape(row["first_name"] or "Utilizator")
             text += texts.LEADERBOARD_ROW.format(
                 medal=medal, position=position, name=name, xp=row["xp"]
             )

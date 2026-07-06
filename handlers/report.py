@@ -1,3 +1,5 @@
+import html
+
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -22,7 +24,7 @@ def build_xp_report() -> list[str]:
     header = f"📊 <b>Evidență XP — {len(rows)} membri</b>\n"
     lines = []
     for position, row in enumerate(rows, start=1):
-        name = row["first_name"] or "Utilizator"
+        name = html.escape(row["first_name"] or "Utilizator")
         username = f" (@{row['username']})" if row["username"] else ""
         _, level_name, _ = level_for_xp(row["xp"])
         lines.append(f"{position}. {name}{username} — {row['xp']} XP — {level_name}")
