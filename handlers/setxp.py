@@ -40,14 +40,14 @@ async def receive_list(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             db.queue_pending_xp(username, name, xp)
             queued.append(label)
         else:
-            db.update_user(row["telegram_id"], xp=xp)
+            db.update_user(row["telegram_id"], xp=xp, tg_access=1, dc_access=1)
             updated.append(name)
 
-    summary = f"✅ XP actualizat pentru {len(updated)} membri."
+    summary = f"✅ XP restaurat și acces Telegram+Discord deblocat pentru {len(updated)} membri."
     if queued:
         summary += (
             f"\n\n⏳ Puși în așteptare ({len(queued)}) — nu sunt încă în baza de date, "
-            "dar XP-ul li se va aplica automat de îndată ce trimit /start botului, "
+            "dar XP-ul și accesul li se vor aplica automat de îndată ce trimit /start botului, "
             "fără să reia nimic de la capăt:\n"
         )
         summary += "\n".join(queued)

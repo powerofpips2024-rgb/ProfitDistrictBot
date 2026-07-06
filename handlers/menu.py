@@ -14,7 +14,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     restored_xp = db.claim_pending_xp(user.id, user.username, user.first_name)
     if restored_xp is not None:
         await update.message.reply_text(
-            f"🎉 Am recuperat progresul tău anterior: {restored_xp} XP!"
+            f"🎉 Am recuperat progresul tău anterior: {restored_xp} XP! "
+            "Accesul tău în Telegram + Discord a fost restaurat automat."
         )
     await update.message.reply_text(
         texts.WELCOME, reply_markup=keyboards.main_menu(db.get_user(user.id)), parse_mode="HTML"

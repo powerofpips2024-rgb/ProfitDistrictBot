@@ -261,7 +261,8 @@ def claim_pending_xp(telegram_id: int, username: str | None, first_name: str | N
         return None
     conn.execute("DELETE FROM pending_xp WHERE rowid = ?", (row["rid"],))
     conn.execute(
-        "UPDATE users SET xp = ?, updated_at = CURRENT_TIMESTAMP WHERE telegram_id = ?",
+        "UPDATE users SET xp = ?, tg_access = 1, dc_access = 1, updated_at = CURRENT_TIMESTAMP "
+        "WHERE telegram_id = ?",
         (row["xp"], telegram_id),
     )
     conn.commit()
