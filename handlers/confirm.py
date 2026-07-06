@@ -2,6 +2,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 import db
+from config import ADMIN_CHAT_ID
 
 TOAST = {
     "tg_access": "✅ Perfect! Te așteptăm în grupul de Telegram.",
@@ -13,6 +14,12 @@ XP_AWARD = {
     "tg_access": 50,
     "dc_access": 50,
     "tgdc_access": 100,
+}
+
+ADMIN_LABEL = {
+    "tg_access": "a intrat în grupul de Telegram",
+    "dc_access": "a intrat pe Discord",
+    "tgdc_access": "a intrat în Telegram + Discord",
 }
 
 
@@ -34,4 +41,11 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if xp and not already_done:
         db.add_xp(user_id, xp)
         toast += f" (+{xp} XP)"
+        if ADMIN_CHAT_ID:
+            person = update.effective_user
+            await context.bot.send_message(
+                chat_id=ADMIN_CHAT_ID,
+                text=f"🔔 {person.mention_html()} (id: {person.id}) {ADMIN_LABEL.get(field, field)}. (+{xp} XP)",
+                parse_mode="HTML",
+            )
     await query.answer(toast, show_alert=True)
