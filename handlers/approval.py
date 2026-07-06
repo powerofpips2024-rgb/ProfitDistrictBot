@@ -1,9 +1,13 @@
+import logging
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 import db
 from config import ADMIN_CHAT_ID
 from handlers.render import edit_or_send
+
+logger = logging.getLogger(__name__)
 
 DB_FIELD = {
     "mentorship": "mentorship_confirmed",
@@ -86,7 +90,13 @@ async def approve(update: Update, context: ContextTypes.DEFAULT_TYPE):
         db.add_xp(user_id, xp)
 
     await query.answer("Aprobat.")
-    await context.bot.send_message(chat_id=user_id, text=USER_MESSAGE.get(approval_type, "✅ Confirmat!"))
+    try:
+        await context.bot.send_message(chat_id=user_id, text=USER_MESSAGE.get(approval_type, "✅ Confirmat!"))
+    except Exception:
+        # If the requester blocked the bot (or any other send failure), the
+        # admin must still see their own "Aprobat." confirmation below --
+        # the DB update already succeeded above.
+        logger.exception("Nu am putut notifica utilizatorul %s despre aprobare", user_id)
 
     original_text = query.message.text or query.message.caption or ""
     await edit_or_send(query, f"{original_text}\n\n✅ Aprobat.")

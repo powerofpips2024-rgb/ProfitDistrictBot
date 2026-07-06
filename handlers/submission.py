@@ -1,4 +1,5 @@
 import html
+import logging
 import re
 
 from telegram import Update
@@ -9,6 +10,8 @@ import keyboards
 import texts
 from config import ADMIN_CHAT_ID
 from handlers.render import edit_or_send
+
+logger = logging.getLogger(__name__)
 
 NUME, PRENUME, EMAIL, DISCORD_USERNAME, PROOF = range(5)
 
@@ -98,7 +101,12 @@ async def receive_proof(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         access_granted=1,
     )
 
-    await _notify_admin_submission(context, user, product, nume, prenume, email, discord_username)
+    try:
+        await _notify_admin_submission(context, user, product, nume, prenume, email, discord_username)
+    except Exception:
+        # A failure to notify the admin must never block the user's own
+        # "you've got access" message below -- their data was already saved above.
+        logger.exception("Nu am putut notifica adminul despre înscrierea lui %s", user.id)
 
     if product == "comp":
         await message.reply_text(

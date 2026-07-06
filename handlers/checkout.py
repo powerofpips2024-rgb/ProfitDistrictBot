@@ -4,6 +4,7 @@ from telegram.ext import ContextTypes, ConversationHandler, filters
 import db
 import keyboards
 import texts
+from handlers.render import edit_or_send
 
 Q1, Q2, Q3, Q4_TEXT, Q5_TEXT, Q6 = range(6)
 
@@ -20,7 +21,7 @@ async def q1(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     context.user_data["checkout"]["traded"] = query.data.split(":")[2]
-    await query.edit_message_text(texts.CHECKOUT_Q2, reply_markup=keyboards.checkout_q2_menu())
+    await edit_or_send(query,texts.CHECKOUT_Q2, reply_markup=keyboards.checkout_q2_menu())
     return Q2
 
 
@@ -28,7 +29,7 @@ async def q2(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     context.user_data["checkout"]["respected_plan"] = query.data.split(":")[2]
-    await query.edit_message_text(texts.CHECKOUT_Q3, reply_markup=keyboards.checkout_q3_menu())
+    await edit_or_send(query,texts.CHECKOUT_Q3, reply_markup=keyboards.checkout_q3_menu())
     return Q3
 
 
@@ -36,7 +37,7 @@ async def q3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     context.user_data["checkout"]["day_feeling"] = query.data.split(":")[2]
-    await query.edit_message_text(texts.CHECKOUT_Q4)
+    await edit_or_send(query,texts.CHECKOUT_Q4)
     return Q4_TEXT
 
 
@@ -60,7 +61,7 @@ async def q6(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     db.save_checkout(update.effective_user.id, **context.user_data["checkout"])
     context.user_data.pop("checkout", None)
 
-    await query.edit_message_text(texts.CHECKOUT_DONE)
+    await edit_or_send(query,texts.CHECKOUT_DONE)
     return ConversationHandler.END
 
 
