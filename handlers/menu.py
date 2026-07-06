@@ -11,6 +11,11 @@ from handlers.render import edit_or_send
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     db.upsert_user(user.id, user.username, user.first_name)
+    restored_xp = db.claim_pending_xp(user.id, user.username, user.first_name)
+    if restored_xp is not None:
+        await update.message.reply_text(
+            f"🎉 Am recuperat progresul tău anterior: {restored_xp} XP!"
+        )
     await update.message.reply_text(
         texts.WELCOME, reply_markup=keyboards.main_menu(db.get_user(user.id)), parse_mode="HTML"
     )

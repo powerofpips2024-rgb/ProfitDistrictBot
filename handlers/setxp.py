@@ -28,7 +28,7 @@ async def receive_list(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         return ConversationHandler.END
 
     updated = []
-    not_found = []
+    queued = []
     for name, username, xp_text in matches:
         name = name.strip()
         xp = int(xp_text)
@@ -37,15 +37,20 @@ async def receive_list(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             row = db.find_user_by_first_name(name)
         if row is None:
             label = f"{name} (@{username})" if username else name
-            not_found.append(label)
+            db.queue_pending_xp(username, name, xp)
+            queued.append(label)
         else:
             db.update_user(row["telegram_id"], xp=xp)
             updated.append(name)
 
     summary = f"✅ XP actualizat pentru {len(updated)} membri."
-    if not_found:
-        summary += f"\n\n⚠️ Negăsiți în baza de date ({len(not_found)}) — probabil nu au dat /start încă pe acest deploy:\n"
-        summary += "\n".join(not_found)
+    if queued:
+        summary += (
+            f"\n\n⏳ Puși în așteptare ({len(queued)}) — nu sunt încă în baza de date, "
+            "dar XP-ul li se va aplica automat de îndată ce trimit /start botului, "
+            "fără să reia nimic de la capăt:\n"
+        )
+        summary += "\n".join(queued)
     await update.message.reply_text(summary)
     return ConversationHandler.END
 

@@ -87,6 +87,16 @@ def init_db():
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pending_xp (
+            username TEXT,
+            first_name TEXT,
+            xp INTEGER,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
     conn.commit()
     for column_def in (
         "existing_broker TEXT",
@@ -215,6 +225,48 @@ def find_user_by_first_name(name: str) -> sqlite3.Row | None:
     ).fetchall()
     conn.close()
     return rows[0] if len(rows) == 1 else None
+
+
+def queue_pending_xp(username: str | None, first_name: str | None, xp: int):
+    conn = get_connection()
+    if username:
+        conn.execute("DELETE FROM pending_xp WHERE username = ? COLLATE NOCASE", (username,))
+    else:
+        conn.execute(
+            "DELETE FROM pending_xp WHERE username IS NULL AND first_name = ? COLLATE NOCASE",
+            (first_name,),
+        )
+    conn.execute(
+        "INSERT INTO pending_xp (username, first_name, xp) VALUES (?, ?, ?)",
+        (username, first_name, xp),
+    )
+    conn.commit()
+    conn.close()
+
+
+def claim_pending_xp(telegram_id: int, username: str | None, first_name: str | None) -> int | None:
+    conn = get_connection()
+    row = None
+    if username:
+        row = conn.execute(
+            "SELECT rowid AS rid, xp FROM pending_xp WHERE username = ? COLLATE NOCASE", (username,)
+        ).fetchone()
+    if row is None and first_name:
+        row = conn.execute(
+            "SELECT rowid AS rid, xp FROM pending_xp WHERE username IS NULL AND first_name = ? COLLATE NOCASE",
+            (first_name,),
+        ).fetchone()
+    if row is None:
+        conn.close()
+        return None
+    conn.execute("DELETE FROM pending_xp WHERE rowid = ?", (row["rid"],))
+    conn.execute(
+        "UPDATE users SET xp = ?, updated_at = CURRENT_TIMESTAMP WHERE telegram_id = ?",
+        (row["xp"], telegram_id),
+    )
+    conn.commit()
+    conn.close()
+    return row["xp"]
 
 
 def get_leaderboard(limit: int = 10) -> list[sqlite3.Row]:
