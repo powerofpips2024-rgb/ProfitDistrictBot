@@ -1,3 +1,7 @@
+from levels import LEVELS
+
+ELITE_XP_THRESHOLD = LEVELS[-1][0]
+
 AUTO_ACHIEVEMENTS = [
     ("mentorship_confirmed", "🏅 Mentorat Finalizat"),
     ("community", "🏅 Community Member"),
@@ -15,7 +19,7 @@ def _is_unlocked(user, key: str) -> bool:
     if key == "community":
         return bool(user["tg_access"] or user["dc_access"])
     if key == "elite":
-        return user["xp"] >= 1500
+        return user["xp"] >= ELITE_XP_THRESHOLD
     return bool(user[key])
 
 
