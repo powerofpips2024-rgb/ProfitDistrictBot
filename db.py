@@ -268,6 +268,15 @@ def queue_pending_xp(username: str | None, first_name: str | None, xp: int):
     conn.close()
 
 
+def list_pending_xp() -> list[sqlite3.Row]:
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT username, first_name, xp FROM pending_xp ORDER BY xp DESC"
+    ).fetchall()
+    conn.close()
+    return rows
+
+
 def claim_pending_xp(telegram_id: int, username: str | None, first_name: str | None) -> int | None:
     conn = get_connection()
     row = None
