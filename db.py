@@ -136,6 +136,40 @@ def init_db():
         except sqlite3.OperationalError:
             pass
     conn.close()
+    dedupe_pending_xp()
+
+
+def dedupe_pending_xp():
+    """Collapses duplicate pending_xp rows for the same person (same username,
+    or same first_name when there's no username) down to a single row with the
+    highest XP value. Duplicates can pile up if /setxp is pasted more than once
+    with overlapping entries, and they're actively harmful: claim_pending_xp()
+    refuses to auto-apply a match when it finds more than one candidate row
+    (to avoid guessing between two different real people who share a name),
+    so a duplicated entry permanently blocks that person's XP from ever being
+    restored via /start, not just showing up twice in /raport."""
+    conn = get_connection()
+    rows = conn.execute("SELECT rowid AS rid, username, first_name, xp FROM pending_xp").fetchall()
+
+    groups: dict[tuple[str, str], list] = {}
+    for row in rows:
+        if row["username"]:
+            key = ("u", row["username"].casefold())
+        elif row["first_name"]:
+            key = ("n", _fold_name(row["first_name"]))
+        else:
+            continue
+        groups.setdefault(key, []).append(row)
+
+    for group_rows in groups.values():
+        if len(group_rows) <= 1:
+            continue
+        keep = max(group_rows, key=lambda r: r["xp"])
+        for row in group_rows:
+            if row["rid"] != keep["rid"]:
+                conn.execute("DELETE FROM pending_xp WHERE rowid = ?", (row["rid"],))
+    conn.commit()
+    conn.close()
 
 
 def upsert_user(telegram_id: int, username: str | None, first_name: str | None):
