@@ -38,6 +38,11 @@ from handlers import (
 
 TIMEZONE = ZoneInfo("Europe/Bucharest")
 
+# PTB's day-of-week convention for JobQueue.run_daily is 0=Sunday..6=Saturday.
+# Piața e închisă sâmbătă și duminică, deci mesajele zilnice automate rulează
+# doar luni-vineri până se adaugă un mesaj dedicat pentru weekend.
+WEEKDAYS_MON_FRI = (1, 2, 3, 4, 5)
+
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -333,13 +338,13 @@ def build_application() -> Application:
     application.add_error_handler(error_handler)
 
     application.job_queue.run_daily(
-        _send_daily_reminder, time=datetime.time(20, 0, tzinfo=TIMEZONE)
+        _send_daily_reminder, time=datetime.time(20, 0, tzinfo=TIMEZONE), days=WEEKDAYS_MON_FRI
     )
     application.job_queue.run_daily(
-        _send_checkin_prompt, time=datetime.time(8, 0, tzinfo=TIMEZONE)
+        _send_checkin_prompt, time=datetime.time(8, 0, tzinfo=TIMEZONE), days=WEEKDAYS_MON_FRI
     )
     application.job_queue.run_daily(
-        _send_checkout_prompt, time=datetime.time(19, 0, tzinfo=TIMEZONE)
+        _send_checkout_prompt, time=datetime.time(19, 0, tzinfo=TIMEZONE), days=WEEKDAYS_MON_FRI
     )
     application.job_queue.run_daily(
         backup.daily_backup_job, time=datetime.time(3, 0, tzinfo=TIMEZONE)
