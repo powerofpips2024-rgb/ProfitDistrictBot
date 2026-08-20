@@ -8,13 +8,12 @@ import keyboards
 import texts
 from handlers.render import edit_or_send
 
+# Challenge 500→5.000 / Competiție / Eveniment sunt scoase temporar din
+# ecosistem cat timp nu sunt accesibile din meniu (vezi keyboards.py).
 ECOSYSTEM_ITEMS = [
     ("mentorship_confirmed", "30 Days Mentorship"),
     ("tg_access", "Telegram"),
     ("dc_access", "Discord"),
-    ("challenge_done", "Challenge 500→5.000"),
-    ("competition_done", "Competiție"),
-    ("event_confirmed", "Eveniment"),
 ]
 
 
@@ -29,12 +28,6 @@ def _next_step_text(user) -> str:
         return "📈 Intră în grupul de Telegram"
     if not user["dc_access"]:
         return "🔥 Intră pe Discord"
-    if not user["challenge_done"]:
-        return "🏆 Începe Challenge 500 → 5.000"
-    if not user["competition_done"]:
-        return "🥇 Înscrie-te la o competiție"
-    if not user["event_confirmed"]:
-        return "📅 Înscrie-te la eveniment"
     return "🎉 Ai finalizat toți pașii disponibili!"
 
 

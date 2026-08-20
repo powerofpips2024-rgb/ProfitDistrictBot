@@ -16,7 +16,6 @@ def main_menu(user=None) -> InlineKeyboardMarkup:
     tg_done = bool(user and user["tg_access"])
     dc_done = bool(user and user["dc_access"])
     mentorship_done = bool(user and user["mentorship_confirmed"])
-    challenge_done = bool(user and user["challenge_done"])
     show_profile = tg_done or dc_done
 
     rows = []
@@ -38,11 +37,10 @@ def main_menu(user=None) -> InlineKeyboardMarkup:
         rows.append([InlineKeyboardButton("🔥 Discord", callback_data="menu:discord")])
     if not (tg_done and dc_done):
         rows.append([InlineKeyboardButton("📈🔥 Telegram + Discord", callback_data="menu:tgdc")])
-    if not challenge_done:
-        rows.append([InlineKeyboardButton("🏆 Challenge 500 → 5.000", callback_data="menu:challenge")])
+    # Challenge 500 → 5.000 / Competiții / Evenimente sunt scoase temporar din
+    # meniu (posibil reintroduse pe viitor) -- codul din spate a ramas intact,
+    # se reactiveaza doar adaugand butoanele la loc aici.
     rows += [
-        [InlineKeyboardButton("🥇 Competiții", callback_data="menu:competitions")],
-        [InlineKeyboardButton("📅 Evenimente", callback_data="menu:events")],
         [InlineKeyboardButton("🎁 Resurse gratuite", callback_data="menu:resources")],
         [InlineKeyboardButton("❓ Întrebări frecvente", callback_data="menu:faq")],
         [InlineKeyboardButton("💬 Contactează echipa", callback_data="menu:contact")],
@@ -57,7 +55,6 @@ def start_here_menu() -> InlineKeyboardMarkup:
         [InlineKeyboardButton("📈 Telegram", callback_data="menu:telegram")],
         [InlineKeyboardButton("🔥 Discord", callback_data="menu:discord")],
         [InlineKeyboardButton("📈🔥 Telegram + Discord", callback_data="menu:tgdc")],
-        [InlineKeyboardButton("🏆 Challenge 500 → 5.000", callback_data="menu:challenge")],
         [BACK_TO_MAIN],
     ]
     return InlineKeyboardMarkup(rows)
