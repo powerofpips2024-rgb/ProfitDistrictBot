@@ -44,8 +44,6 @@ async def receive_nume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 
 async def receive_prenume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["prenume"] = update.message.text.strip()
-    if context.user_data.get("submission_variant") == "pu":
-        return await _after_prenume_or_email(update, context)
     await update.message.reply_text(texts.ASK_EMAIL)
     return EMAIL
 

@@ -7,6 +7,7 @@ from texts import (
     COMPETITION_LEADERBOARD_URL,
     EVENTS_URL,
     FAQ_LIST,
+    NEXT_EVENT_URL,
 )
 
 BACK_TO_MAIN = InlineKeyboardButton("🔙 Meniu principal", callback_data="menu:main")
@@ -18,9 +19,12 @@ def main_menu(user=None) -> InlineKeyboardMarkup:
     mentorship_done = bool(user and user["mentorship_confirmed"])
     show_profile = tg_done or dc_done
 
+    # Evenimentul sta mereu sus: sub "Profilul meu" la membri, primul la cei noi.
+    next_event = [InlineKeyboardButton("📅 Următorul eveniment", callback_data="menu:next_event")]
     rows = []
     if show_profile:
         rows.append([InlineKeyboardButton("👤 Profilul meu", callback_data="menu:profile")])
+    rows.append(next_event)
     if mentorship_done:
         rows.append([InlineKeyboardButton("🎮 Nivelul meu", callback_data="menu:level")])
         rows.append([InlineKeyboardButton("🏆 Clasament", callback_data="menu:leaderboard")])
@@ -79,15 +83,14 @@ def broker_has_broker_menu(product: str) -> InlineKeyboardMarkup:
 
 
 EXISTING_BROKER_OPTIONS = [
-    ("pu", "1. PU Prime"),
-    ("robo", "2. RoboForex"),
-    ("multibank", "3. Multibank"),
-    ("fp", "4. FP Markets / FP Trading"),
-    ("ic", "5. IC Markets"),
-    ("vantage", "6. Vantage"),
-    ("t212", "7. Trading 212"),
-    ("xtb", "8. XTB"),
-    ("altul", "9. ALTUL"),
+    ("robo", "1. RoboForex"),
+    ("multibank", "2. Multibank"),
+    ("fp", "3. FP Markets / FP Trading"),
+    ("ic", "4. IC Markets"),
+    ("vantage", "5. Vantage"),
+    ("t212", "6. Trading 212"),
+    ("xtb", "7. XTB"),
+    ("altul", "8. ALTUL"),
 ]
 
 
@@ -97,25 +100,6 @@ def broker_existing_menu(product: str) -> InlineKeyboardMarkup:
         for code, label in EXISTING_BROKER_OPTIONS
     ]
     rows.append([BACK_TO_MAIN])
-    return InlineKeyboardMarkup(rows)
-
-
-def broker_capital_menu(product: str) -> InlineKeyboardMarkup:
-    rows = [
-        [InlineKeyboardButton("sub 200$", callback_data=f"brk:{product}:cap:under200")],
-        [InlineKeyboardButton("peste 200$", callback_data=f"brk:{product}:cap:over200")],
-        [BACK_TO_MAIN],
-    ]
-    return InlineKeyboardMarkup(rows)
-
-
-def broker_priority_menu(product: str) -> InlineKeyboardMarkup:
-    rows = [
-        [InlineKeyboardButton("costuri mici", callback_data=f"brk:{product}:pri:cost")],
-        [InlineKeyboardButton("copy trading", callback_data=f"brk:{product}:pri:copy")],
-        [InlineKeyboardButton("bonus depozit", callback_data=f"brk:{product}:pri:bonus")],
-        [BACK_TO_MAIN],
-    ]
     return InlineKeyboardMarkup(rows)
 
 
@@ -143,14 +127,6 @@ def onboarding_step_menu(product: str, step: int, confirm_label: str) -> InlineK
 def submission_start_menu(product: str) -> InlineKeyboardMarkup:
     rows = [
         [InlineKeyboardButton("📝 Trimite datele", callback_data=f"sub:{product}:std:start")],
-        [BACK_TO_MAIN],
-    ]
-    return InlineKeyboardMarkup(rows)
-
-
-def pu_prime_continue_menu(product: str) -> InlineKeyboardMarkup:
-    rows = [
-        [InlineKeyboardButton("➡️ Am creat cont și am depozitat", callback_data=f"sub:{product}:pu:start")],
         [BACK_TO_MAIN],
     ]
     return InlineKeyboardMarkup(rows)
@@ -212,6 +188,7 @@ def level_menu(show_trade_button: bool = False) -> InlineKeyboardMarkup:
 
 def profile_menu() -> InlineKeyboardMarkup:
     rows = [
+        [InlineKeyboardButton("📅 Următorul eveniment", callback_data="menu:next_event")],
         [InlineKeyboardButton("📞 Contactează echipa", callback_data="menu:contact")],
         [BACK_TO_MAIN],
     ]
@@ -247,6 +224,14 @@ def competition_success_menu() -> InlineKeyboardMarkup:
     rows = [
         [InlineKeyboardButton("🏆 Vezi clasamentul", url=COMPETITION_LEADERBOARD_URL)],
         [InlineKeyboardButton("✅ M-am înscris", callback_data="req:competition")],
+        [BACK_TO_MAIN],
+    ]
+    return InlineKeyboardMarkup(rows)
+
+
+def next_event_menu() -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton("🎟 Detalii și rezervare", url=NEXT_EVENT_URL)],
         [BACK_TO_MAIN],
     ]
     return InlineKeyboardMarkup(rows)

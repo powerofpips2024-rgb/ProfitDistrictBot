@@ -59,26 +59,9 @@ TELEGRAM_DISCORD_INTRO = (
     "Ai deja cont la un broker?"
 )
 
-ASK_CAPITAL = "Ce capital ai disponibil?"
-
-ASK_PRIORITY = "Ce este mai important pentru tine?"
-
-RECOMMEND_PU_PRIME = (
-    "💡 Pentru capitalul tău, recomandarea noastră este <b>PU Prime</b> — costuri accesibile "
-    "și condiții bune pentru un start cu sumă mai mică."
-)
-
-RECOMMEND_FP_MARKETS_COST = (
-    "💡 Pentru ce contează pentru tine, recomandarea noastră este <b>FP Markets</b> — costuri "
-    "mici de tranzacționare."
-)
-
-RECOMMEND_FP_MARKETS_COPY = (
-    "💡 Pentru copy trading, recomandarea noastră este <b>FP Markets</b>."
-)
-
-RECOMMEND_PU_PRIME_BONUS = (
-    "💡 Pentru bonus la depozit, recomandarea noastră este <b>PU Prime</b>."
+RECOMMEND_FP_MARKETS = (
+    "💡 Recomandarea noastră este <b>FP Markets</b> — costuri mici de tranzacționare și "
+    "acces la copy trading."
 )
 
 ASK_EXISTING_BROKER = "La ce broker ai cont?"
@@ -86,24 +69,6 @@ ASK_EXISTING_BROKER = "La ce broker ai cont?"
 RECOMMEND_FOR_EXISTING_BROKER = (
     "💡 Pentru accesul complet la comunitate, îți recomandăm să deschizi și un cont la "
     "<b>{broker}</b>, folosind linkul de mai jos."
-)
-
-PU_PRIME_TRANSFER_INSTRUCTIONS = (
-    "💡 Ai deja cont la <b>PU Prime</b>! Ca să primești acces, trebuie doar să transferi "
-    "parteneriatul contului tău:\n\n"
-    "1️⃣ Intră pe contul tău PU Prime\n"
-    "2️⃣ <b>My Profile → Transfer IB/CPA</b>\n"
-    "3️⃣ Completează:\n"
-    "   • Partnership type: <b>IB</b>\n"
-    "   • New IB/CPA: <b>101048</b>\n"
-    "   • Reason: <b>Educație și semnale gratuite</b>\n\n"
-    "👇 Mai jos ai o poză cu exact unde trebuie să intri."
-)
-
-PU_PRIME_DEPOSIT_CAPTION = (
-    "Creează un cont și depozitează suma cu care vrei să începi să tranzacționezi.\n\n"
-    "După ce ai depus, apasă mai jos și trimite-ne numele, prenumele și dovada depozitării.\n\n"
-    "Accesul nu este limitat în timp — poți rămâne cât timp ești mulțumit/ă."
 )
 
 ONBOARDING_STEP_1 = (
@@ -261,7 +226,20 @@ COMPETITION_SUCCESS = (
 
 COMPETITION_LEADERBOARD_URL = "https://profitdistrictromania.com/concurs.html"
 
-NEXT_EVENT_TEXT = "Inner Circle EDITIA II 16-19 IULIE 2026"
+NEXT_EVENT_TEXT = "Dincolo de aparențe — 29 noiembrie 2026, Cluj"
+
+NEXT_EVENT_URL = "https://profitdistrictromania.com/dincolo-de-aparente.html"
+
+NEXT_EVENT_SCREEN = (
+    "📅 <b>Următorul eveniment: Dincolo de aparențe</b>\n\n"
+    "<i>Pune-ți banii la treabă.</i>\n\n"
+    "O întâlnire live despre copy trading — explicații practice, întrebări fără ocolișuri, "
+    "conversații față în față.\n\n"
+    "🗓 <b>29 noiembrie 2026</b>\n"
+    "📍 Grand Hotel Napoca, Cluj\n"
+    "🎟 Acces: <b>10 €</b>\n\n"
+    "Locurile sunt limitate. Vezi toate detaliile și rezervă-ți locul 👇"
+)
 
 PROFILE_TEMPLATE = (
     "👋 Salut, {first_name}!\n\n"

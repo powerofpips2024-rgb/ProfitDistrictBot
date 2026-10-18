@@ -1,12 +1,10 @@
-from pathlib import Path
-
 from telegram import Update
 from telegram.ext import ContextTypes
 
 import db
 import keyboards
 import texts
-from config import FP_MARKETS_LINK, PU_PRIME_LINK
+from config import FP_MARKETS_LINK
 from handlers.render import edit_or_send
 
 PRODUCT_INTRO = {
@@ -15,19 +13,6 @@ PRODUCT_INTRO = {
     "both": texts.TELEGRAM_DISCORD_INTRO,
     "comp": texts.COMPETITION_BROKER_INTRO,
 }
-
-EXISTING_BROKER_LINK = {
-    "robo": PU_PRIME_LINK,
-    "multibank": FP_MARKETS_LINK,
-    "fp": FP_MARKETS_LINK,
-    "ic": FP_MARKETS_LINK,
-    "vantage": PU_PRIME_LINK,
-    "t212": PU_PRIME_LINK,
-    "xtb": PU_PRIME_LINK,
-    "altul": FP_MARKETS_LINK,
-}
-
-IB_IMAGE_PATH = Path(__file__).parent.parent / "assets" / "ib.jpg"
 
 
 async def show_intro(update: Update, context: ContextTypes.DEFAULT_TYPE, product: str):
@@ -81,72 +66,24 @@ async def route_broker(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 texts.ASK_EXISTING_BROKER,
                 reply_markup=keyboards.broker_existing_menu(product),
             )
-        else:
-            await edit_or_send(
-                query,
-                texts.ASK_CAPITAL,
-                reply_markup=keyboards.broker_capital_menu(product),
-            )
-
+            return
     elif field == "exi":
         db.update_user(user_id, existing_broker=value)
-        if value == "pu":
-            db.update_user(user_id, broker_recommended="PU Prime")
-            await edit_or_send(query, texts.PU_PRIME_TRANSFER_INSTRUCTIONS, parse_mode="HTML")
-            with open(IB_IMAGE_PATH, "rb") as photo:
-                await query.message.reply_photo(
-                    photo=photo,
-                    caption=texts.PU_PRIME_DEPOSIT_CAPTION,
-                    reply_markup=keyboards.pu_prime_continue_menu(product),
-                )
-            return
 
-        link = EXISTING_BROKER_LINK[value]
-        broker_name = "FP Markets" if link == FP_MARKETS_LINK else "PU Prime"
-        db.update_user(user_id, broker_recommended=broker_name)
-        show_support = value == "fp" and product in ("tg", "dc", "both")
-        await edit_or_send(
-            query,
-            texts.RECOMMEND_FOR_EXISTING_BROKER.format(broker=broker_name),
-            reply_markup=keyboards.broker_recommendation_menu(product, link, show_support=show_support),
-            parse_mode="HTML",
-        )
-
-    elif field == "cap":
-        db.update_user(user_id, capital=value)
-        if value == "under200":
-            db.update_user(user_id, broker_recommended="PU Prime")
-            await edit_or_send(
-                query,
-                texts.RECOMMEND_PU_PRIME,
-                reply_markup=keyboards.broker_recommendation_menu(product, PU_PRIME_LINK),
-                parse_mode="HTML",
-            )
-        else:
-            await edit_or_send(
-                query,
-                texts.ASK_PRIORITY,
-                reply_markup=keyboards.broker_priority_menu(product),
-            )
-
-    elif field == "pri":
-        db.update_user(user_id, priority=value)
-        if value == "cost":
-            broker, text = "FP Markets", texts.RECOMMEND_FP_MARKETS_COST
-            link = FP_MARKETS_LINK
-        elif value == "copy":
-            broker, text = "FP Markets", texts.RECOMMEND_FP_MARKETS_COPY
-            link = FP_MARKETS_LINK
-        else:
-            broker, text = "PU Prime", texts.RECOMMEND_PU_PRIME_BONUS
-            link = PU_PRIME_LINK
-        db.update_user(user_id, broker_recommended=broker)
-        await edit_or_send(
-            query,
-            text,
-            reply_markup=keyboards.broker_recommendation_menu(product, link),
-            parse_mode="HTML",
-        )
+    # Recomandam doar FP Markets. Butoanele vechi (PU Prime, capital, prioritate)
+    # ramase in chat-uri mai vechi ajung tot aici, in loc sa nu mai raspunda.
+    db.update_user(user_id, broker_recommended="FP Markets")
+    if field == "exi":
+        text = texts.RECOMMEND_FOR_EXISTING_BROKER.format(broker="FP Markets")
+    else:
+        text = texts.RECOMMEND_FP_MARKETS
+    show_support = field == "exi" and value == "fp" and product in ("tg", "dc", "both")
+    await edit_or_send(
+        query,
+        text,
+        reply_markup=keyboards.broker_recommendation_menu(product, FP_MARKETS_LINK, show_support=show_support),
+        parse_mode="HTML",
+    )
 
 
 async def route_onboarding(update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -49,6 +49,14 @@ async def show_events(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def show_next_event(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await edit_or_send(
+        query, texts.NEXT_EVENT_SCREEN, reply_markup=keyboards.next_event_menu(), parse_mode="HTML"
+    )
+
+
 async def show_resources(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -78,6 +86,7 @@ async def route(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "start": show_start_here,
         "competitions": competition.show_intro,
         "events": show_events,
+        "next_event": show_next_event,
         "resources": show_resources,
         "mentorship": mentorship.show_intro,
         "challenge": challenge.show_intro,

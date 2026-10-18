@@ -47,6 +47,8 @@ WEEKDAYS_MON_FRI = (1, 2, 3, 4, 5)
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
+# httpx logheaza fiecare request cu URL-ul complet, care contine token-ul botului
+logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
